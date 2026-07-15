@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AppData } from '../types'
 import { envConfig, getClient, getConfig, lastSyncAt, pendingItems, setConfig } from '../lib/sync'
+import { parseHevyCsv, type HevyImportResult } from '../lib/hevy'
 import { ACCENT, BG, GREEN, RED, TEXT_DIM, card, sectionLabel } from './theme'
 
 interface Props {
   data: AppData
   onClose: () => void
   onSyncNow: () => Promise<string | null> // returns error message or null
+  onImport: (result: HevyImportResult) => { addedSessions: number; addedExercises: number }
 }
 
 const fieldStyle: React.CSSProperties = {
@@ -38,7 +40,8 @@ const secondaryBtn: React.CSSProperties = {
   color: ACCENT,
 }
 
-export function SyncScreen({ data, onClose, onSyncNow }: Props) {
+export function SyncScreen({ data, onClose, onSyncNow, onImport }: Props) {
+  const fileRef = useRef<HTMLInputElement>(null)
   const [configured, setConfigured] = useState(!!getConfig())
   const [email, setEmail] = useState<string | null>(null)
   const [uid, setUid] = useState<string | null>(null)
@@ -190,6 +193,38 @@ export function SyncScreen({ data, onClose, onSyncNow }: Props) {
             <button onClick={signOut} disabled={busy} style={{ ...secondaryBtn, background: 'none', color: RED }}>Sign Out</button>
           </div>
         )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ ...sectionLabel, paddingLeft: 4 }}>Import</div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv,text/csv"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              e.target.value = ''
+              if (!file) return
+              void run(async () => {
+                const text = await file.text()
+                const parsed = parseHevyCsv(text, data.exercises)
+                const res = onImport(parsed)
+                setMsg({
+                  text: `Imported ${res.addedSessions} workout${res.addedSessions === 1 ? '' : 's'} and ${res.addedExercises} new exercise${res.addedExercises === 1 ? '' : 's'}.` +
+                    (parsed.sessions.length - res.addedSessions > 0 ? ` ${parsed.sessions.length - res.addedSessions} already imported were skipped.` : ''),
+                  error: false,
+                })
+              })
+            }}
+          />
+          <button onClick={() => fileRef.current?.click()} disabled={busy} style={secondaryBtn}>
+            Import Hevy CSV…
+          </button>
+          <div style={{ fontSize: 12.5, color: TEXT_DIM, lineHeight: 1.5, padding: '0 2px' }}>
+            In Hevy: Profile → Settings → Export workout data. Pick the CSV here — workouts land in History and
+            unknown exercises are added to your library. Importing the same file twice never duplicates.
+          </div>
+        </div>
 
         {msg && (
           <div style={{ fontSize: 13.5, lineHeight: 1.5, color: msg.error ? RED : GREEN, padding: '0 2px' }}>{msg.text}</div>

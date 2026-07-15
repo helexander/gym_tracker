@@ -3,6 +3,7 @@ import type { ActiveWorkout, AppData, DraftSet, Equipment, Muscle, Routine, Sess
 import { loadData, saveData } from './lib/storage'
 import { bestKgFor, dateKeyOf, lastSetsFor } from './lib/stats'
 import { fullSync } from './lib/sync'
+import type { HevyImportResult } from './lib/hevy'
 import { SyncScreen } from './ui/SyncScreen'
 import { TabBar, type Tab } from './ui/TabBar'
 import { HomeScreen } from './ui/HomeScreen'
@@ -175,6 +176,22 @@ export default function App() {
     setNewExOpen(false)
   }
 
+  const importHevy = (result: HevyImportResult): { addedSessions: number; addedExercises: number } => {
+    const existingIds = new Set(dataRef.current.sessions.map((s) => s.id))
+    const addSessions = result.sessions.filter((s) => !existingIds.has(s.id))
+    const existingExIds = new Set(dataRef.current.exercises.map((e) => e.id))
+    const addExercises = result.newExercises.filter((e) => !existingExIds.has(e.id))
+    setData((d) => ({
+      ...d,
+      exercises: [...addExercises, ...d.exercises],
+      sessions: [...addSessions, ...d.sessions].sort((a, b) =>
+        b.dateKey === a.dateKey ? b.startedAt - a.startedAt : b.dateKey < a.dateKey ? -1 : 1,
+      ),
+    }))
+    setTimeout(() => void syncNow(), 50)
+    return { addedSessions: addSessions.length, addedExercises: addExercises.length }
+  }
+
   const detailExercise = useMemo(
     () => (detailId ? data.exercises.find((e) => e.id === detailId) ?? null : null),
     [detailId, data.exercises],
@@ -252,7 +269,7 @@ export default function App() {
 
       {newExOpen && <NewExercise onSave={saveNewExercise} onCancel={() => setNewExOpen(false)} />}
 
-      {syncOpen && <SyncScreen data={data} onClose={() => setSyncOpen(false)} onSyncNow={syncNow} />}
+      {syncOpen && <SyncScreen data={data} onClose={() => setSyncOpen(false)} onSyncNow={syncNow} onImport={importHevy} />}
     </div>
   )
 }
