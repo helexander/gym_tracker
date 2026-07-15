@@ -2,7 +2,9 @@ import type { Equipment, Muscle } from '../types'
 
 // Generated from the Hevy exercise dataset (ShehrozAttique/Hevy-Exercises-Data-Scraper).
 // Tuple: [name, equipment, muscle, demo asset path ('' = none)].
-const DEMO_BASE = 'https://pump-app.s3.eu-west-2.amazonaws.com/exercise-assets/'
+// Demo media is mirrored into public/demos/ (served same-origin with the app),
+// so demos keep working even if the original dataset's bucket disappears.
+const DEMO_BASE = import.meta.env.BASE_URL + 'demos/'
 
 type Row = [string, Equipment, Muscle, string]
 
