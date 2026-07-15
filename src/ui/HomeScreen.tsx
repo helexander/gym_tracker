@@ -8,6 +8,7 @@ interface Props {
   exerciseName: (id: string) => string
   onStartEmpty: () => void
   onStartRoutine: (r: Routine) => void
+  onOpenSync: () => void
 }
 
 function lastDoneLabel(sessions: Session[], routineName: string): string {
@@ -21,7 +22,7 @@ function lastDoneLabel(sessions: Session[], routineName: string): string {
   return fmtSessionDate(s.dateKey)
 }
 
-export function HomeScreen({ sessions, routines, exerciseName, onStartEmpty, onStartRoutine }: Props) {
+export function HomeScreen({ sessions, routines, exerciseName, onStartEmpty, onStartRoutine, onOpenSync }: Props) {
   const now = new Date()
   const weekStartKey = dateKeyOf(startOfWeek(now))
   const wk = sessions.filter((s) => s.dateKey >= weekStartKey)
@@ -30,11 +31,28 @@ export function HomeScreen({ sessions, routines, exerciseName, onStartEmpty, onS
 
   return (
     <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_DIM, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-          {fmtHeaderDate(now)}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: TEXT_DIM, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+            {fmtHeaderDate(now)}
+          </div>
+          <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: 0.2, color: '#000', lineHeight: 1.2 }}>Workout</div>
         </div>
-        <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: 0.2, color: '#000', lineHeight: 1.2 }}>Workout</div>
+        <button
+          onClick={onOpenSync}
+          aria-label="Backup & sync"
+          style={{ border: 'none', background: '#FFFFFF', width: 38, height: 38, borderRadius: 19, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', marginBottom: 4 }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path
+              d="M7 18 a4.5 4.5 0 0 1 -0.5 -8.97 A6 6 0 0 1 18.2 10.6 A4 4 0 0 1 17.5 18 Z"
+              fill="none"
+              stroke={ACCENT}
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>

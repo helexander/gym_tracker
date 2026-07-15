@@ -18,7 +18,20 @@ Built as an installable **Progressive Web App (PWA)**: it runs fullscreen on iPh
 
 ## Tech stack
 
-React 18 + TypeScript + Vite. No backend — state persists to `localStorage`. A small service worker caches the app shell for offline use.
+React 18 + TypeScript + Vite. State persists to `localStorage` (the app is fully usable offline); a small service worker caches the app shell. Optional cloud backup via Supabase (below).
+
+## Backup & sync (Supabase)
+
+The phone stays the source of truth — sync is an offline-first backup: every finished workout and custom exercise is queued locally and pushed when online (on app start, on reconnect, and right after each workout). Remote data is also pulled and merged, so a second device sees the same history.
+
+One-time setup:
+
+1. Create a free project at [supabase.com](https://supabase.com).
+2. In the project's **SQL Editor**, run the contents of [`supabase/schema.sql`](supabase/schema.sql) (creates `exercises` + `sessions` tables with row-level security).
+3. In **Authentication → Sign In / Up → Email**, turn **off** "Confirm email" (or keep it on and click the confirmation link once).
+4. In the app, tap the **cloud button** on the Home screen, paste the **Project URL** and **anon key** (from Settings → API), then create an account with an email + password.
+
+The anon key is a publishable key; data access is protected per-account by RLS policies. Alternatively, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as GitHub Actions repository **variables** to bake the server into the deployed build so the app skips step 4's URL/key entry.
 
 ## Develop
 

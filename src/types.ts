@@ -11,6 +11,8 @@ export interface Exercise {
   equipment: Equipment
   notes: string
   custom: boolean
+  /** Epoch ms of last edit — used for cross-device merge. */
+  updatedAt?: number
 }
 
 /** A single logged set inside a finished session. */

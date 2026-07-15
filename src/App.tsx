@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ActiveWorkout, AppData, DraftSet, Equipment, Muscle, Routine, Session, SetLog } from './types'
 import { loadData, saveData } from './lib/storage'
 import { bestKgFor, dateKeyOf, lastSetsFor } from './lib/stats'
+import { fullSync } from './lib/sync'
+import { SyncScreen } from './ui/SyncScreen'
 import { TabBar, type Tab } from './ui/TabBar'
 import { HomeScreen } from './ui/HomeScreen'
 import { HistoryScreen } from './ui/HistoryScreen'
@@ -28,6 +30,7 @@ export default function App() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Muscle | 'All'>('All')
   const [newExOpen, setNewExOpen] = useState<false | 'library' | 'workout'>(false)
+  const [syncOpen, setSyncOpen] = useState(false)
 
   // Persist on every change.
   const first = useRef(true)
@@ -38,6 +41,33 @@ export default function App() {
     }
     saveData(data)
   }, [data])
+
+  // Sync: push pending items and pull remote changes. Runs on app start, when
+  // connectivity returns, and after anything worth backing up happens.
+  // Silently a no-op when sync isn't configured / signed in / offline.
+  const dataRef = useRef(data)
+  dataRef.current = data
+  const syncing = useRef(false)
+  const syncNow = async (): Promise<string | null> => {
+    if (syncing.current) return null
+    syncing.current = true
+    try {
+      const res = await fullSync(dataRef.current)
+      if (res?.changed) setData(res.data)
+      return null
+    } catch (e) {
+      return e instanceof Error ? e.message : String(e)
+    } finally {
+      syncing.current = false
+    }
+  }
+  useEffect(() => {
+    const onOnline = () => void syncNow()
+    window.addEventListener('online', onOnline)
+    void syncNow()
+    return () => window.removeEventListener('online', onOnline)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const exerciseName = (id: string) => data.exercises.find((e) => e.id === id)?.name ?? 'Unknown exercise'
 
@@ -115,6 +145,7 @@ export default function App() {
     }
     setData((d) => ({ ...d, sessions: [session, ...d.sessions], active: null }))
     setTab('history')
+    setTimeout(() => void syncNow(), 50) // back up the new session right away
   }
 
   const discardWorkout = () => {
@@ -129,8 +160,9 @@ export default function App() {
     const id = newId('c')
     setData((d) => ({
       ...d,
-      exercises: [{ id, custom: true, ...draft }, ...d.exercises],
+      exercises: [{ id, custom: true, updatedAt: Date.now(), ...draft }, ...d.exercises],
     }))
+    setTimeout(() => void syncNow(), 50)
     if (newExOpen === 'workout' && data.active) {
       updWorkout((w) => {
         w.exercises.push({ exerciseId: id, sets: mkSets(null) })
@@ -162,6 +194,7 @@ export default function App() {
           exerciseName={exerciseName}
           onStartEmpty={() => startWorkout('Workout', [])}
           onStartRoutine={(r: Routine) => startWorkout(r.name, r.exerciseIds)}
+          onOpenSync={() => setSyncOpen(true)}
         />
       )}
       {tab === 'history' && <HistoryScreen sessions={data.sessions} exerciseName={exerciseName} />}
@@ -218,6 +251,8 @@ export default function App() {
       )}
 
       {newExOpen && <NewExercise onSave={saveNewExercise} onCancel={() => setNewExOpen(false)} />}
+
+      {syncOpen && <SyncScreen data={data} onClose={() => setSyncOpen(false)} onSyncNow={syncNow} />}
     </div>
   )
 }
