@@ -1,5 +1,5 @@
-export const EQUIPMENT = ['Barbell', 'Dumbbell', 'Machine', 'Cable', 'Bodyweight', 'Kettlebell'] as const
-export const MUSCLES = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core'] as const
+export const EQUIPMENT = ['Barbell', 'Dumbbell', 'Machine', 'Cable', 'Bodyweight', 'Kettlebell', 'Band', 'Other'] as const
+export const MUSCLES = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Full Body', 'Cardio', 'Other'] as const
 
 export type Equipment = (typeof EQUIPMENT)[number]
 export type Muscle = (typeof MUSCLES)[number]
@@ -13,6 +13,8 @@ export interface Exercise {
   custom: boolean
   /** Epoch ms of last edit — used for cross-device merge. */
   updatedAt?: number
+  /** Demo movement media (mp4 or jpg). Derived from the bundled catalog, not synced. */
+  demoUrl?: string
 }
 
 /** A single logged set inside a finished session. */

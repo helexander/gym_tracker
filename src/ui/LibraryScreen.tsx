@@ -49,9 +49,9 @@ export function ExerciseRow({
 
 export function LibraryScreen({ exercises, search, filter, onSearch, onFilter, onOpen, onNew }: Props) {
   const q = search.toLowerCase()
-  const filtered = exercises.filter(
-    (e) => (filter === 'All' || e.muscle === filter) && (!q || e.name.toLowerCase().includes(q)),
-  )
+  const filtered = exercises
+    .filter((e) => (filter === 'All' || e.muscle === filter) && (!q || e.name.toLowerCase().includes(q)))
+    .sort((a, b) => Number(b.custom) - Number(a.custom) || a.name.localeCompare(b.name))
 
   return (
     <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>

@@ -70,7 +70,9 @@ function PickerSheet({
   onClose: () => void
 }) {
   const [q, setQ] = useState('')
-  const filtered = exercises.filter((e) => !q || e.name.toLowerCase().includes(q.toLowerCase()))
+  const filtered = exercises
+    .filter((e) => !q || e.name.toLowerCase().includes(q.toLowerCase()))
+    .sort((a, b) => Number(b.custom) - Number(a.custom) || a.name.localeCompare(b.name))
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 45 }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)' }} />

@@ -57,6 +57,28 @@ export function ExerciseDetail({ exercise, sessions, onClose }: Props) {
         </div>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '10px 16px 40px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {exercise.demoUrl && (
+          <div style={{ ...card, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.6, color: TEXT_FAINT }}>DEMO</div>
+            {exercise.demoUrl.endsWith('.mp4') ? (
+              <video
+                src={exercise.demoUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                style={{ width: '100%', borderRadius: 12, display: 'block', background: '#F7F7FA' }}
+              />
+            ) : (
+              <img
+                src={exercise.demoUrl}
+                alt={`${exercise.name} demonstration`}
+                style={{ width: '100%', borderRadius: 12, display: 'block', background: '#F7F7FA' }}
+              />
+            )}
+          </div>
+        )}
+
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
           {statBox(bestKg > 0 ? String(bestKg) : '—', 'best weight (kg)')}
           {statBox(e1rm > 0 ? String(e1rm) : '—', 'est. 1RM (kg)')}
